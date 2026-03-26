@@ -1,8 +1,8 @@
-import json  # TODO: remove — unused import, ruff will flag F401
 import os
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
+from retrying import retry
 
 app = FastAPI(title="Payments Webhook Service")
 
@@ -14,6 +14,11 @@ class PaymentEvent(BaseModel):
     event_type: str
 
 
+@retry(stop_max_attempt_number=3, wait_fixed=100)
+def process_payment_event(payload: PaymentEvent) -> dict:
+    return {"status": "ack", "transaction_id": payload.transaction_id}
+
+
 @app.post("/webhook/payments")
 async def receive_payment(
     payload: PaymentEvent,
@@ -22,4 +27,4 @@ async def receive_payment(
     expected = os.getenv("PAYMENTS_WEBHOOK_TOKEN")
     if not expected or x_webhook_token != expected:
         raise HTTPException(status_code=401, detail="Invalid or missing token")
-    return {"status": "ack", "transaction_id": payload.transaction_id}
+    return process_payment_event(payload)
