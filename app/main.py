@@ -17,9 +17,9 @@ class PaymentEvent(BaseModel):
 @app.post("/webhook/payments")
 async def receive_payment(
     payload: PaymentEvent,
-    x_webhook_token: str | None = Header(default=None),
+    x_payments_webhook_token: str | None = Header(default=None),
 ) -> dict:
     expected = os.getenv("PAYMENTS_WEBHOOK_TOKEN")
-    if not expected or x_webhook_token != expected:
+    if not expected or x_payments_webhook_token != expected:
         raise HTTPException(status_code=401, detail="Invalid or missing token")
     return {"status": "ack", "transaction_id": payload.transaction_id}

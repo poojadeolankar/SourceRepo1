@@ -8,7 +8,7 @@ A minimal, production-ready **FastAPI** service that receives and validates inbo
 
 - Exposes a single `POST /webhook/payments` HTTP endpoint.
 - Validates the incoming JSON payload against a strict `PaymentEvent` schema (Pydantic v2).
-- Authenticates every request using the `X-Webhook-Token` header, compared against the `PAYMENTS_WEBHOOK_TOKEN` environment variable.
+- Authenticates every request using the `X-Payments-Webhook-Token` header, compared against the `PAYMENTS_WEBHOOK_TOKEN` environment variable.
 - Returns a JSON acknowledgement `{"status": "ack", "transaction_id": "<id>"}` on success.
 - Returns `401 Unauthorized` if the token is missing or wrong.
 - Returns `422 Unprocessable Entity` if the payload does not match the required schema.
@@ -50,7 +50,7 @@ The `/webhook/payments` endpoint accepts a JSON body with these fields:
 
 ```http
 POST /webhook/payments
-X-Webhook-Token: your-secret-here
+X-Payments-Webhook-Token: your-secret-here
 Content-Type: application/json
 
 {

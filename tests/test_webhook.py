@@ -26,7 +26,7 @@ def test_valid_payment(client):
     response = client.post(
         "/webhook/payments",
         json=VALID_PAYLOAD,
-        headers={"x-webhook-token": TOKEN},
+        headers={"x-payments-webhook-token": TOKEN},
     )
     assert response.status_code == 200
     assert response.json() == {"status": "ack", "transaction_id": "txn_001"}
@@ -36,7 +36,7 @@ def test_invalid_token(client):
     response = client.post(
         "/webhook/payments",
         json=VALID_PAYLOAD,
-        headers={"x-webhook-token": "wrong-token"},
+        headers={"x-payments-webhook-token": "wrong-token"},
     )
     assert response.status_code == 401
 
@@ -46,6 +46,6 @@ def test_invalid_payload(client):
     response = client.post(
         "/webhook/payments",
         json={"transaction_id": "txn_002", "amount": 50.0},
-        headers={"x-webhook-token": TOKEN},
+        headers={"x-payments-webhook-token": TOKEN},
     )
     assert response.status_code == 422
