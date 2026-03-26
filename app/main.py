@@ -1,4 +1,3 @@
-import json  # TODO: remove — unused import, ruff will flag F401
 import os
 
 from fastapi import FastAPI, Header, HTTPException
