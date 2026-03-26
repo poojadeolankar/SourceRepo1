@@ -49,3 +49,42 @@ def test_invalid_payload(client):
         headers={"x-webhook-token": TOKEN},
     )
     assert response.status_code == 422
+
+
+def test_retry_on_transient_error(client, monkeypatch):
+    call_count = 0
+
+    def flaky_execute(payload):
+        nonlocal call_count
+        call_count += 1
+        if call_count < 3:
+            raise IOError("transient failure")
+        return {"status": "ack", "transaction_id": payload.transaction_id}
+
+    monkeypatch.setattr("app.main._execute_payment", flaky_execute)
+    response = client.post(
+        "/webhook/payments",
+        json=VALID_PAYLOAD,
+        headers={"x-webhook-token": TOKEN},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "ack", "transaction_id": "txn_001"}
+    assert call_count == 3
+
+
+def test_no_retry_on_non_transient_error(client, monkeypatch):
+    call_count = 0
+
+    def non_transient_fail(payload):
+        nonlocal call_count
+        call_count += 1
+        raise ValueError("non-transient failure")
+
+    monkeypatch.setattr("app.main._execute_payment", non_transient_fail)
+    with pytest.raises(ValueError, match="non-transient failure"):
+        client.post(
+            "/webhook/payments",
+            json=VALID_PAYLOAD,
+            headers={"x-webhook-token": TOKEN},
+        )
+    assert call_count == 1
